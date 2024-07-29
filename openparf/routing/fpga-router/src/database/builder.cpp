@@ -196,6 +196,9 @@ std::shared_ptr<Module> buildModule(std::string moduleName, pugi::xml_node modul
     for (pugi::xml_node wire : moduleInfo.children("wire")) {
         module->addPort(wire.attribute("name").value(), WIRE, std::max(1, wire.attribute("width").as_int()), "", x, y);
     }
+    for (pugi::xml_node inout : moduleInfo.children("inout")){
+        module->addPort(inout.attribute("name").value(), INOUT, inout.attribute("width").as_int(), "", x, y);
+    }
 
     for (pugi::xml_node subModInfo : moduleInfo.children("module")) {
         std::string subName = subModInfo.attribute("name").value();
@@ -313,6 +316,9 @@ std::shared_ptr<Module> buildModule(std::string moduleName, pugi::xml_node modul
     }
     for (pugi::xml_node wire : moduleInfo.children("wire")) {
         module->addPort(wire.attribute("name").value(), WIRE, std::max(1, wire.attribute("width").as_int()), "");
+    }
+    for (pugi::xml_node inout : moduleInfo.children("inout")){
+        module->addPort(inout.attribute("name").value(), INOUT, inout.attribute("width").as_int(), "");
     }
 
     for (pugi::xml_node subModInfo : moduleInfo.children("module")) {

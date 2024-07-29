@@ -93,7 +93,8 @@ if __name__ == "__main__":
 
     pl_path = "%s/%s.pl" % (params.result_dir, params.design_name())
     # run placement
-    place(params, pl_path)
+    if params.place_flag:
+        place(params, pl_path)
 
     # run routing
     if params.route_flag:

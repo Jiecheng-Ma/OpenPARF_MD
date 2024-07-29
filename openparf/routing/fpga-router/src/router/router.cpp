@@ -246,7 +246,7 @@ void Router::run() {
             printf("Sinks num from %d to %d, net count: %d, total RT: %lf\n", i ? sinks_threshold[i - 1] : 0, sinks_threshold[i], sinks_netcnt[i], sinks_rtcnt[i]);
         }
         std::cout << "Success : Failed : Unrouted " << successCnt << ':' << failedCnt << ':' << unroutedCnt << std::endl;
-        if (totalDRTime >= 86400) break;
+        if (totalDRTime >= 10800) break;
         // if (iter == 15) exit(-1);
         // getchar();
         // if (finished) break;

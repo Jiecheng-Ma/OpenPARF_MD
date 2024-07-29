@@ -1,7 +1,6 @@
 #include "routegraph.h"
 #include "routetree.h"
 #include "pathfinder.h"
-
 #include <assert.h>
 #include <fstream>
 #include <queue>

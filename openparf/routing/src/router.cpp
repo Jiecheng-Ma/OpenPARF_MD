@@ -131,8 +131,17 @@ int routerForward(const std::string &routing_architecture_input,
   std::cout << "Mem Peak: " << get_memory_peak() << "M" << std::endl;
   std::cout << "Mem Curr: " << get_memory_current() << "M" << std::endl;
 
+
+  // for (int y = 0; y < 480; y ++) {
+  //   for (int x = 0; x < 172; x ++) {
+  //     std::cout<<gridLayout->getContent(x, y).name<< ", ";
+  //   }
+  //   std::cout << std::endl;
+  // }
+
+
   router::RouteGraphBuilder           builder(gridLayout);
-  std::shared_ptr<router::RouteGraph> graph = builder.run();
+  std::shared_ptr<router::RouteGraph> graph = builder.run(doc.child("arch"));
   std::cout << "VertexNum: " << graph->getVertexNum() << " EdgeNum: " << graph->getEdgeNum() << std::endl;
   std::cout << "Mem Peak: " << get_memory_peak() << "M" << std::endl;
   std::cout << "Mem Curr: " << get_memory_current() << "M" << std::endl;

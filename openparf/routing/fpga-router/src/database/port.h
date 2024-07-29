@@ -12,6 +12,7 @@ enum PortType {
     INPUT,
     OUTPUT,
     WIRE,
+    INOUT,
     INPIN // In order to differentiate from IPIN of router::VertexType
 };
 

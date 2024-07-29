@@ -3,9 +3,14 @@
 
 namespace router {
 
+    bool isCrossDie(int x1, int y1, int x2, int y2) {
+        return y1 / 120 != y2 / 120;  // TODO
+        // return false;
+    }
+
     int RouteGraphBuilder::globalGraphMaxWidth = 0;
 
-    std::shared_ptr<RouteGraph> RouteGraphBuilder::run() {
+    std::shared_ptr<RouteGraph> RouteGraphBuilder::run(pugi::xml_node archInfo) {
         int width = gridLayout->getwidth(), height = gridLayout->getHeight();
         gswVertexId.resize(width * height);
         std::shared_ptr<RouteGraph> graph(new RouteGraph(width, height, gridLayout->getTotalPins()));
@@ -20,8 +25,27 @@ namespace router {
                 addConnectRecursive(gridLayout->getContent(i, j).gridModule, graph, i, j);
             }
         // exit(0);
-
         graph->globalGraph = std::make_shared<GlobalRouteGraph> (width, height);
+        
+        auto sllPort = gridLayout->getModuleLibrary()["LAGLAG"]->getPort("sll");
+        int sllPortWidth = sllPort->getWidth();
+        for (auto sll : archInfo.child("chip").child("sll_connections").children()) {
+            int x1 = sll.attribute("x1").as_int();
+            int y1 = sll.attribute("y1").as_int();
+            int x2 = sll.attribute("x2").as_int();
+            int y2 = sll.attribute("y2").as_int();
+            
+            for (int i = 0; i < sllPortWidth; i++) {
+                auto pin = sllPort->getPinByIdx(i);
+                int pinId1 = graph->getVertexId(x1, y1, pin);
+                int pinId2 = graph->getVertexId(x2, y2, pin);
+                graph->globalGraph->addEdge(x1, y1, x2, y2);
+                graph->globalGraph->addEdge(x2, y2, x1, y1);
+                graph->addEdge(pinId1, pinId2, 100 * baseCost);  // Delay 还没定义，先不加delay
+                graph->addEdge(pinId2, pinId1, 100 * baseCost);
+            } 
+            // addsll(gridLayout->getContent(x1, y1).gridModule, gridLayout->getContent(x2, y2).gridModule, graph,x1, y1, x2, y2);
+        }
 
         for (int i = 0; i < width; i++)
             for (int j = 0; j < height; j++) {
@@ -49,6 +73,7 @@ namespace router {
                                     else if (length == 2) lengthCost = 60;
                                     else lengthCost = 120;
                                     if (pin->getGSWConnectDirection() == "north") {
+                                        if (isCrossDie(i + k, j + l, i + k, j + l + length)) continue;
                                         if (j + l + length < height && gswVertexId[(i + k) * height + j + l + length].find(pin->getGSWConnectPin()) != gswVertexId[(i + k) * height + j + l + length].end()) {
                                             if (j + l + length < height && gswVertexId[(i + k) * height + j + l + length][pin->getGSWConnectPin()] == 0) {
                                                 std::cout << "!!!!!!!" << pin->getName() << std::endl;
@@ -59,6 +84,7 @@ namespace router {
                                         }
                                     }
                                     if (pin->getGSWConnectDirection() == "south") {
+                                        if (isCrossDie(i + k, j + l, i + k, j + l - length)) continue;
                                         if (j + l - length >= 0 && gswVertexId[(i + k) * height + j + l - length].find(pin->getGSWConnectPin()) != gswVertexId[(i + k) * height + j + l - length].end()) {
                                             if (j + l - length >= 0 && gswVertexId[(i + k) * height + j + l - length][pin->getGSWConnectPin()] == 0) {
                                                 std::cout << "!!!!!!!" << pin->getName() << std::endl;
@@ -69,6 +95,7 @@ namespace router {
                                         }
                                     }
                                     if (pin->getGSWConnectDirection() == "east") {
+                                        if (isCrossDie(i + k, j + l, i + k + length, j + l)) continue;
                                         if (i + k + length < width && gswVertexId[(i + k + length) * height + j + l].find(pin->getGSWConnectPin()) != gswVertexId[(i + k + length) * height + j + l].end()) {
                                             if (i + k + length < width && gswVertexId[(i + k + length) * height + j + l][pin->getGSWConnectPin()] == 0) {
                                                 std::cout << "!!!!!!!" << pin->getName() << std::endl;
@@ -79,6 +106,7 @@ namespace router {
                                         }
                                     }
                                     if (pin->getGSWConnectDirection() == "west") {
+                                        if (isCrossDie(i + k, j + l, i + k - length, j + l)) continue;
                                         if (i + k - length >= 0 && gswVertexId[(i + k - length) * height + j + l].find(pin->getGSWConnectPin()) != gswVertexId[(i + k - length) * height + j + l].end()) {
                                             if (i + k - length >= 0 && gswVertexId[(i + k - length) * height + j + l][pin->getGSWConnectPin()] == 0) {
                                                 std::cout << "!!!!!!!" << pin->getName() << std::endl;
@@ -207,4 +235,41 @@ namespace router {
 
     }
 
+    void RouteGraphBuilder::addsll(std::shared_ptr<RouteGraph> graph, std::shared_ptr<database::Module> mod1,std::shared_ptr<database::Module> mod2,int x1, int y1,int x2,int y2) {
+        // std::cout<<currentModule->getName()<<"\n";
+        for (auto it : mod1->allPorts()) {
+            auto port1 = it.second;
+            if(port1->getName().substr(0,10)!="LAGLAG.sll"){
+                continue;
+            }
+            for(auto it2 : mod2->allPorts()){
+                auto port2 = it2.second;
+                if(port2->getName().substr(0,10)!="LAGLAG.sll"){
+                    continue;
+                }
+
+                // std::cout<<port->getName()<<"\n";
+                int width = port1->getWidth();
+
+                for (int i = 0; i < width; i++) {
+                    auto pin1 = port1->getPinByIdx(i);
+                    int pinId1 = graph->getVertexId(x1, y1, pin1);
+                    auto pin2 = port2->getPinByIdx(i);
+                    int pinId2 = graph->getVertexId(x2, y2, pin2);
+
+                    std::cout<< pinId1 << " " << pinId2 << std::endl;
+
+                    graph->globalGraph->addEdge(x1, y1, x2, y2);
+                    graph->globalGraph->addEdge(x2, y2, x1, y1);
+                    graph->addEdge(pinId1, pinId2, 100 * baseCost);  // Delay 还没定义，先不加delay
+                    graph->addEdge(pinId2, pinId1, 100 * baseCost);
+                    // if(x1==10 && y1==119){
+                    // std::cout<<"SLL:"<<"\n";
+                    // std::cout<<pinId1<<"\n";}
+
+                    // graph->addVertexCost(connId, 1);                
+                }             
+            }
+        }
+    }
 }

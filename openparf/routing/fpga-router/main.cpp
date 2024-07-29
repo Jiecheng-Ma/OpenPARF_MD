@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     std::cout << "Mem Curr: " << get_memory_current() << "M" << std::endl;
 
     router::RouteGraphBuilder builder(gridLayout);
-    std::shared_ptr<router::RouteGraph> graph = builder.run();
+    std::shared_ptr<router::RouteGraph> graph = builder.run(doc.child("arch"));
     std::cout << "VertexNum: " << graph->getVertexNum() << " EdgeNum: " << graph->getEdgeNum() << std::endl;
     std::cout << "Mem Peak: " << get_memory_peak() << "M" << std::endl;
     std::cout << "Mem Curr: " << get_memory_current() << "M" << std::endl;
