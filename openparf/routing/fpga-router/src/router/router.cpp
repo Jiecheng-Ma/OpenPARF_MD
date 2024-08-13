@@ -69,7 +69,9 @@ void Router::buildPinMap(std::unordered_map<std::string, std::shared_ptr<databas
         buildPinMap(pinMap, subModule.second);
     }
 }
-
+int getdiebelong(int x){
+    return x/120;
+}
 void Router::run() {
     high_resolution_clock::time_point gr_s, gr_e;
     gr_s = high_resolution_clock::now();
@@ -100,7 +102,7 @@ void Router::run() {
 
     RouteGraph::presFac = RouteGraph::presFacFirstIter;
 
-    auto cmp = [](const std::shared_ptr<Net> &a, const std::shared_ptr<Net> &b) {
+    auto cmp = [](const std::shared_ptr<Net> &a, const std::shared_ptr<Net> &b) { //优先布线重布线越多的net
                 if ( a->getRerouteTime() == b->getRerouteTime()) {
                 auto guide_a = a->getGuide();
                 auto guide_b = b->getGuide();
@@ -108,6 +110,48 @@ void Router::run() {
                     >  (guide_b.end_x - guide_b.start_x + 1) * (guide_b.end_y - guide_b.start_y + 1);
                 }
                 return a->getRerouteTime() > b->getRerouteTime();
+    };
+    auto cmp4sll = [](const std::shared_ptr<Net> &a, const std::shared_ptr<Net> &b) { //优先布线跨代
+                auto guide_a = a->getGuide();
+                auto guide_b = b->getGuide();
+                int a_ey=getdiebelong(guide_a.end_y);
+                int a_sy=getdiebelong(guide_a.start_y);
+                int b_ey=getdiebelong(guide_b.end_y);
+                int b_sy=getdiebelong(guide_b.start_y);
+                bool neta_cross_die_flag=(a_ey!=a_sy ? 1: 0);
+                bool netb_cross_die_flag=(b_ey!=b_sy ? 1: 0);
+                if(neta_cross_die_flag || netb_cross_die_flag){
+                    if(neta_cross_die_flag && netb_cross_die_flag==0){
+                        return a>b;
+                    }
+                    if(neta_cross_die_flag==0 && netb_cross_die_flag){
+                        return b>a;
+                    }
+                    else{
+                        if ( a->getRerouteTime() == b->getRerouteTime()) {
+                            return (guide_a.end_x - guide_a.start_x + 1) * (guide_a.end_y - guide_a.start_y + 1)
+                            >  (guide_b.end_x - guide_b.start_x + 1) * (guide_b.end_y - guide_b.start_y + 1);
+                        }
+                        else
+                            return a->getRerouteTime() > b->getRerouteTime();
+                    } 
+                }
+                else{
+                    if ( a->getRerouteTime() == b->getRerouteTime()) {
+                        return (guide_a.end_x - guide_a.start_x + 1) * (guide_a.end_y - guide_a.start_y + 1)
+                            >  (guide_b.end_x - guide_b.start_x + 1) * (guide_b.end_y - guide_b.start_y + 1);
+                    }
+                    else
+                        return a->getRerouteTime() > b->getRerouteTime();
+                }
+    };
+    auto Num4InterSLL = [&](std::vector<std::shared_ptr<Net>> netlist) {
+            int countInterSLLnet = 0;
+            for (auto net : netlist) {
+                auto guide_a = net->getGuide();
+                if(floor(guide_a.end_y /120) != floor(guide_a.start_y/120)) countInterSLLnet++;
+            }
+            return countInterSLLnet;
     };
 
     auto delayCmp = [](const std::shared_ptr<Net> &a, const std::shared_ptr<Net> &b) {
@@ -141,6 +185,12 @@ void Router::run() {
         timer.estimateSTA();
     }
 
+    auto num4interSllNet = Num4InterSLL(netlist);
+    int reccord4unrouted = 0,cnt4ChangeSortRule = 0;
+    bool changeSortRule = false;
+    int his1=0;
+    int his2=0;
+    std::cout << "-------TotalNetNum #"<< netlist.size()<<"----InterSLLNetNum #"<< num4interSllNet <<"---------"<< std::endl;
     for (int iter = 0; iter < maxRipupIter; iter++) {
         // if (iter >= 290)
         // RouteGraph::debugging = true;
@@ -158,12 +208,30 @@ void Router::run() {
         Pathfinder::cost.assign(graph->getVertexNum(), std::numeric_limits<COST_T>::max());
         Pathfinder::prev.assign(graph->getVertexNum(), -1);
 
-        if(iter < 10) 
-            sort(netlist.begin(), netlist.end(), cmp);
-        else
-            std::reverse(netlist.begin(), netlist.end()); 
+        ////////////////////11111/// ///////////////////// 
+        // if(iter < 20) //10
+        //     sort(netlist.begin(), netlist.end(), cmp);  
+        // else if (iter >=20 && iter < 100 )
+        //     std::reverse(netlist.begin(), netlist.end()); 
+        // else
+        //     sort(netlist.begin(), netlist.end(), cmp); 
+        /////////////////////222222//////////////////////////
+        if(iter == 0)
+            sort(netlist.begin(), netlist.end(), cmp4sll);
+        else if(iter > 0 && iter < 20)
+                sort(netlist.begin(), netlist.end(), cmp);  
+        // else if(!changeSortRule)
+        //         std::reverse(netlist.begin(), netlist.end());    
+        // else if(changeSortRule){
+        else{
+        	sort(netlist.begin(), netlist.end(), cmp4sll); 
+            std::cout << " changeSortRule "<<std::endl;
+        	changeSortRule = false;
+        }   
+        //////////////////////////////////////////////////
+		
         int vertexNum = graph->getVertexNum();
-        Pathfinder::routetree.ripup(netlist, (iter > 0 && iter % 2 == 0));
+        Pathfinder::routetree.ripup(netlist, (iter > 0 && iter % 2 == 0)); 
         std::vector<std::shared_ptr<Net>> unroutedNets;
         int successCnt = 0, failedCnt = 0, unroutedCnt = 0;
         
@@ -173,9 +241,8 @@ void Router::run() {
         int sinks_netcnt[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         double bb_rtcnt[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         double sinks_rtcnt[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
+ 
         // if (iter >= 30) std::reverse(netlist.begin(), netlist.end());
-
         // if (iter == 20) Pathfinder::routetree.congestAddCost = 0;
         for (auto net : netlist) {
             // if (net->getName() != "sparc_mul_top:mul|sparc_mul_dp:dpath|mul64:mulcore|rs2_ff[32]") continue;
@@ -196,11 +263,20 @@ void Router::run() {
                 // else 
                 failedCnt++;
             }
-            if (net->getRouteStatus() == UNROUTED || net->getRouteStatus() == CONGESTED) {
+            if (net->getRouteStatus() == UNROUTED || net->getRouteStatus() == CONGESTED) { //拥塞处理为未布线
                 net->setRouteStatus(UNROUTED);
-                if (iter % 3 == 0 && iter > 0 && iter < 30 && net->useGlobalResult() == false)
-                    net->expandGuide();
-                if (MTType == SingleThread) {
+                if (iter % 3 == 0 && iter > 0 && iter < 30 && net->useGlobalResult() == false){
+                    net->expandGuide();//扩大boundingbox
+                    std::cout << "ExpandGuide NET: "<< net->getName() <<std::endl;                   
+                }
+                if ( net->getRerouteTime() > 80 && iter > 100 && net->useGlobalResult() == false){
+                    for(int i = 0;  (i < int(net->getRerouteTime() - 80) && i < 2 ) ;i++){
+                            net->expandGuide();//扩大boundingbox
+                    }
+                    std::cout << "ExpandGuide High congest NET: "<< net->getName() <<"   reroutrtime: " << net->getRerouteTime() <<std::endl;   
+                }
+
+                if (MTType == SingleThread) { 
                     auto rs = high_resolution_clock::now();
                     AStarPathfinder finder(net, graph);
                     RouteStatus status = finder.run();
@@ -216,37 +292,48 @@ void Router::run() {
                             break;
                         }
                     }
-                    sinks_netcnt[id]++;
+                    sinks_netcnt[id]++; // id 1-10
                     sinks_rtcnt[id] += duration_ms.count();
                     if (duration_ms.count() > 1000) {
                         std::cout << "NET " << net->getName() << " RT: " << duration_ms.count() << "ms\n";
+                        // if(iter == 0)
+                        //     netlist_congestion.push_back(net);//计入布线困难线网列表
                     }
-                    // printf("Runtime: %lfms\n", duration_ms.count());
                 }
                 unroutedNets.push_back(net);
                 unroutedCnt++;
             }
-/* debugging */
-// if (net->getName() == "sparc_mul_top:mul|sparc_mul_dp:dpath|mul64:mulcore|rs1_ff[0]") {
-//     auto head = Pathfinder::routetree.getNetRoot(net);
-//     std::queue<std::shared_ptr<TreeNode>> q;
-//     q.push(head);
-//     while (!q.empty()) {
-//         auto now = q.front();
-//         q.pop();
-//         for (auto child = now->firstChild; child != nullptr; child = child->right) {
-//             std::cout << now->nodeId << "->" << child->nodeId << std::endl;
-//             q.push(child);
-//         }
-//     }
-// }
-/* end */
+            /* debugging */
+            // if (net->getName() == "sparc_mul_top:mul|sparc_mul_dp:dpath|mul64:mulcore|rs1_ff[0]") {
+            //     auto head = Pathfinder::routetree.getNetRoot(net);
+            //     std::queue<std::shared_ptr<TreeNode>> q;
+            //     q.push(head);
+            //     while (!q.empty()) {
+            //         auto now = q.front();
+            //         q.pop();
+            //         for (auto child = now->firstChild; child != nullptr; child = child->right) {
+            //             std::cout << now->nodeId << "->" << child->nodeId << std::endl;
+            //             q.push(child);
+            //         }
+            //     }
+            // }
+            /* end */
         }
         for (int i = 0; i < 10; i++) {
             printf("Sinks num from %d to %d, net count: %d, total RT: %lf\n", i ? sinks_threshold[i - 1] : 0, sinks_threshold[i], sinks_netcnt[i], sinks_rtcnt[i]);
         }
         std::cout << "Success : Failed : Unrouted " << successCnt << ':' << failedCnt << ':' << unroutedCnt << std::endl;
-        if (totalDRTime >= 10800) break;
+        ////////////////////////////////////////////////////////////////////////////////////
+        if(iter == 0)
+        	reccord4unrouted = unroutedCnt;
+
+        if(reccord4unrouted <= unroutedCnt)
+        	changeSortRule = true;
+        	
+        reccord4unrouted = unroutedCnt;
+
+        ////////////////////////////////////////////////////////////////////////////////////
+        if (totalDRTime >= 21600) break;
         // if (iter == 15) exit(-1);
         // getchar();
         // if (finished) break;
@@ -321,17 +408,19 @@ void Router::run() {
         printf("Iter #%d, Runtime: %lfs\n", iter, duration_s.count());
         // printVPRWirelength(netlist, graph);
         std::cout << "WL: " << Pathfinder::routetree.getTotalWL() << std::endl;
-
+	
         std::cout << "presFac: " << RouteGraph::presFac << std::endl;
         std::cout << "Routed Sinks: " << Pathfinder::routedSinks << std::endl;
         if (iter == 0) RouteGraph::presFac = RouteGraph::presFacInit;
         else RouteGraph::presFac = std::min(RouteGraph::presFacMult * RouteGraph::presFac, (COST_T)1e25);
         // PathNode::astarFac = std::min(RouteGraph::presFacMult * PathNode::astarFac, (COST_T)1e20);
-    
+        
+        // debug for timeOut 
         // if (iter >= 290) {
         //     std::string outputDoc = "debug_result_" + std::to_string(iter);
         //     printRouteResult(netlist, outputDoc, graph);
         // }
+
         if (Pathfinder::isTimingDriven) {
             timer.STA();
             timer.updatePinCritical(netlist);
@@ -346,7 +435,6 @@ void Router::run() {
     dr_e = high_resolution_clock::now();
     duration<double, std::ratio<1, 1> > duration_dr(dr_e - dr_s);
     std::cout << "DR Runtime: " << duration_dr.count() << "s" << std::endl; 
-
     // graph->getInstList().calcDelayAndSlack();
     // graph->getInstList().printSTA();
     if (InstList::period) {
@@ -354,7 +442,6 @@ void Router::run() {
         timer.printSTA();
         timer.printEdgeDelay();
     }
-
     // double totalDumpGraphTime = 0, totalPathfindTime = 0;
     // for (auto net : netlist) {
     //     totalDumpGraphTime += net->dumpGraphTime;
@@ -373,8 +460,6 @@ void Router::routeTileNets() {
     //     int sinkSize = net->getSinkSize();
     //     for ()
     // }
-
-
 }
 
 

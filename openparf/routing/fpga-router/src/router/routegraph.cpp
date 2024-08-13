@@ -8,7 +8,7 @@
 namespace router {
     COST_T RouteGraph::presFacFirstIter = 0.8;
     COST_T RouteGraph::presFacInit = 1.0;
-    COST_T RouteGraph::presFacMult = 10000.0;
+    COST_T RouteGraph::presFacMult = 5.0;
     COST_T RouteGraph::presFac;
     COST_T RouteGraph::accFac = 0.8;
     bool RouteGraph::useAStar = true;
