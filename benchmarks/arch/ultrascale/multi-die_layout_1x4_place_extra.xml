@@ -833,131 +833,6 @@
         <tile type="DUMMY" width="1" height="1">
             <inst name="DUMMY" type="DUMMY" num="1"/>
         </tile>
-        <tile type="IO30" width="1" height="30">
-            <!-- TODO: fill in other fields. -->
-            <resource name="IO" num="30"/>
-        </tile>
-        <tile type="IO60" width="1" height="60">
-            <input name="IN" width="60"/>
-            <output name="OUT" width="60"/>
-            <inst name="inpad" type="IBUF" num="60"/>
-            <inst name="outpad" type="OBUF" num="60"/>
-            <inst name="gsw" type="GSW_A" num="1"/>
-            <resource name="IO" num="60"/>
-            <interconnect>
-                <broadcast name="CLK_0" inputs="lsw[0].o_fu_ctrl[0]" outputs="inpad.CLK"/>
-                <broadcast name="CLK_1" inputs="lsw[0].o_fu_ctrl[1]" outputs="outpad.CLK"/>
-                <broadcast name="SR_0" inputs="lsw[0].o_fu_ctrl[2]" outputs="inpad.SR"/>
-                <broadcast name="SR_1" inputs="lsw[0].o_fu_ctrl[3]" outputs="outpad.SR"/>
-                <broadcast name="CE_0" inputs="lsw[0].o_fu_ctrl[4]" outputs="inpad.CE"/>
-                <broadcast name="CE_1" inputs="lsw[0].o_fu_ctrl[5]" outputs="outpad.CE"/>
-                <direct name="do_to_top" inputs="outpad.O" outputs="OUT"/>
-                <direct name="top_to_di" inputs="IN" outputs="inpad.I"/>
-                <direct name="inpad_to_lsw" inputs="inpad.O" outputs="lsw[0].i_fu"/>
-                <direct name="lsw_to_ouptpad" inputs="lsw[0].o_fu" outputs="outpad.I"/>
-                <direct name="gsw_to_lsw" inputs="gsw[0].o_lsw" outputs="lsw[0].i_gsw"/>
-                <direct name="lsw_direct_to_gsw" inputs="lsw[0].o_gsw_direct" outputs="gsw[0].i_lsw_direct"/>
-                <direct name="lsw_switch_to_gsw" inputs="lsw[0].o_gsw_switch" outputs="gsw[0].i_lsw_switch"/>
-                <!-- common connection -->
-                <direct name="clk_gsw_to_lsw" inputs="gsw[0].o_clk" outputs="lsw[0].i_gsw_clk"/>
-            </interconnect>
-            <local_sw name="lsw" num="1">
-                <input name="i_gsw" width="192"/>
-                <input name="i_gsw_clk" width="8"/>
-                <output name="o_gsw_direct" width="32"/>
-                <output name="o_gsw_switch" width="32"/>
-                <input name="i_fu" width="24"/>
-                <output name="o_fu" width="24"/>
-                <output name="o_fu_ctrl" width="6"/>
-                <interconnect>
-                    <!-- IO to gsw -->
-                    <direct name="o_gsw_direct_15_8"
-                            inputs="i_fu[3],i_fu[7],i_fu[11],i_fu[9],i_fu[13],i_fu[15],i_fu[19],i_fu[23]"
-                            outputs="o_gsw_direct[15:8]"/>
-                    <direct name="o_gsw_direct_23_16"
-                            inputs="i_fu[3],i_fu[7],i_fu[11],i_fu[9],i_fu[13],i_fu[15],i_fu[19],i_fu[23]"
-                            outputs="o_gsw_direct[23:16]"/>
-                    <connect name="o_gsw_switch" inputs="i_fu" outputs="o_gsw_switch"/>
-                    <connect name="o_gsw_direct" inputs="i_fu" outputs="o_gsw_direct[7:0]"/>
-                    <!-- gsw to IO -->
-                    <connect name="i_gsw_0"
-                             inputs="i_gsw[3],i_gsw[7],i_gsw[19],i_gsw[23],i_gsw[35],i_gsw[39],i_gsw[51],i_gsw[55],i_gsw[67],i_gsw[71],i_gsw[83],i_gsw[87],i_gsw[99],i_gsw[103],i_gsw[115],i_gsw[119],i_gsw[131],i_gsw[135],i_gsw[147],i_gsw[151],i_gsw[163],i_gsw[167],i_gsw[179],i_gsw[183]"
-                             outputs="o_fu[0]"/>
-                    <connect name="i_gsw_1"
-                             inputs="i_gsw[2],i_gsw[6],i_gsw[18],i_gsw[22],i_gsw[34],i_gsw[38],i_gsw[50],i_gsw[54],i_gsw[66],i_gsw[70],i_gsw[82],i_gsw[86],i_gsw[98],i_gsw[102],i_gsw[114],i_gsw[118],i_gsw[130],i_gsw[134],i_gsw[146],i_gsw[150],i_gsw[162],i_gsw[166],i_gsw[178],i_gsw[182]"
-                             outputs="o_fu[1]"/>
-                    <connect name="i_gsw_2"
-                             inputs="i_gsw[1],i_gsw[5],i_gsw[17],i_gsw[21],i_gsw[33],i_gsw[37],i_gsw[49],i_gsw[53],i_gsw[65],i_gsw[69],i_gsw[81],i_gsw[85],i_gsw[97],i_gsw[101],i_gsw[113],i_gsw[117],i_gsw[129],i_gsw[133],i_gsw[145],i_gsw[149],i_gsw[161],i_gsw[165],i_gsw[177],i_gsw[181]"
-                             outputs="o_fu[2]"/>
-                    <connect name="i_gsw_3"
-                             inputs="i_gsw[0],i_gsw[4],i_gsw[16],i_gsw[20],i_gsw[32],i_gsw[36],i_gsw[48],i_gsw[52],i_gsw[64],i_gsw[68],i_gsw[80],i_gsw[84],i_gsw[96],i_gsw[100],i_gsw[112],i_gsw[116],i_gsw[128],i_gsw[132],i_gsw[144],i_gsw[148],i_gsw[160],i_gsw[164],i_gsw[176],i_gsw[180]"
-                             outputs="o_fu[3]"/>
-                    <connect name="i_gsw_4"
-                             inputs="i_gsw[3],i_gsw[7],i_gsw[19],i_gsw[23],i_gsw[35],i_gsw[39],i_gsw[51],i_gsw[55],i_gsw[67],i_gsw[71],i_gsw[83],i_gsw[87],i_gsw[99],i_gsw[103],i_gsw[115],i_gsw[119],i_gsw[131],i_gsw[135],i_gsw[147],i_gsw[151],i_gsw[163],i_gsw[167],i_gsw[179],i_gsw[183]"
-                             outputs="o_fu[4]"/>
-                    <connect name="i_gsw_5"
-                             inputs="i_gsw[2],i_gsw[6],i_gsw[18],i_gsw[22],i_gsw[34],i_gsw[38],i_gsw[50],i_gsw[54],i_gsw[66],i_gsw[70],i_gsw[82],i_gsw[86],i_gsw[98],i_gsw[102],i_gsw[114],i_gsw[118],i_gsw[130],i_gsw[134],i_gsw[146],i_gsw[150],i_gsw[162],i_gsw[166],i_gsw[178],i_gsw[182]"
-                             outputs="o_fu[5]"/>
-                    <connect name="i_gsw_6"
-                             inputs="i_gsw[1],i_gsw[5],i_gsw[17],i_gsw[21],i_gsw[33],i_gsw[37],i_gsw[49],i_gsw[53],i_gsw[65],i_gsw[69],i_gsw[81],i_gsw[85],i_gsw[97],i_gsw[101],i_gsw[113],i_gsw[117],i_gsw[129],i_gsw[133],i_gsw[145],i_gsw[149],i_gsw[161],i_gsw[165],i_gsw[177],i_gsw[181]"
-                             outputs="o_fu[6]"/>
-                    <connect name="i_gsw_7"
-                             inputs="i_gsw[0],i_gsw[4],i_gsw[16],i_gsw[20],i_gsw[32],i_gsw[36],i_gsw[48],i_gsw[52],i_gsw[64],i_gsw[68],i_gsw[80],i_gsw[84],i_gsw[96],i_gsw[100],i_gsw[112],i_gsw[116],i_gsw[128],i_gsw[132],i_gsw[144],i_gsw[148],i_gsw[160],i_gsw[164],i_gsw[176],i_gsw[180]"
-                             outputs="o_fu[7]"/>
-                    <connect name="i_gsw_8"
-                             inputs="i_gsw[3],i_gsw[7],i_gsw[19],i_gsw[23],i_gsw[35],i_gsw[39],i_gsw[51],i_gsw[55],i_gsw[67],i_gsw[71],i_gsw[83],i_gsw[87],i_gsw[99],i_gsw[103],i_gsw[115],i_gsw[119],i_gsw[131],i_gsw[135],i_gsw[147],i_gsw[151],i_gsw[163],i_gsw[167],i_gsw[179],i_gsw[183]"
-                             outputs="o_fu[8]"/>
-                    <connect name="i_gsw_9"
-                             inputs="i_gsw[2],i_gsw[6],i_gsw[18],i_gsw[22],i_gsw[34],i_gsw[38],i_gsw[50],i_gsw[54],i_gsw[66],i_gsw[70],i_gsw[82],i_gsw[86],i_gsw[98],i_gsw[102],i_gsw[114],i_gsw[118],i_gsw[130],i_gsw[134],i_gsw[146],i_gsw[150],i_gsw[162],i_gsw[166],i_gsw[178],i_gsw[182]"
-                             outputs="o_fu[9]"/>
-                    <connect name="i_gsw_10"
-                             inputs="i_gsw[1],i_gsw[5],i_gsw[17],i_gsw[21],i_gsw[33],i_gsw[37],i_gsw[49],i_gsw[53],i_gsw[65],i_gsw[69],i_gsw[81],i_gsw[85],i_gsw[97],i_gsw[101],i_gsw[113],i_gsw[117],i_gsw[129],i_gsw[133],i_gsw[145],i_gsw[149],i_gsw[161],i_gsw[165],i_gsw[177],i_gsw[181]"
-                             outputs="o_fu[10]"/>
-                    <connect name="i_gsw_11"
-                             inputs="i_gsw[0],i_gsw[4],i_gsw[16],i_gsw[20],i_gsw[32],i_gsw[36],i_gsw[48],i_gsw[52],i_gsw[64],i_gsw[68],i_gsw[80],i_gsw[84],i_gsw[96],i_gsw[100],i_gsw[112],i_gsw[116],i_gsw[128],i_gsw[132],i_gsw[144],i_gsw[148],i_gsw[160],i_gsw[164],i_gsw[176],i_gsw[180]"
-                             outputs="o_fu[11]"/>
-                    <connect name="i_gsw_12"
-                             inputs="i_gsw[3],i_gsw[7],i_gsw[19],i_gsw[23],i_gsw[35],i_gsw[39],i_gsw[51],i_gsw[55],i_gsw[67],i_gsw[71],i_gsw[83],i_gsw[87],i_gsw[99],i_gsw[103],i_gsw[115],i_gsw[119],i_gsw[131],i_gsw[135],i_gsw[147],i_gsw[151],i_gsw[163],i_gsw[167],i_gsw[179],i_gsw[183]"
-                             outputs="o_fu[12]"/>
-                    <connect name="i_gsw_13"
-                             inputs="i_gsw[2],i_gsw[6],i_gsw[18],i_gsw[22],i_gsw[34],i_gsw[38],i_gsw[50],i_gsw[54],i_gsw[66],i_gsw[70],i_gsw[82],i_gsw[86],i_gsw[98],i_gsw[102],i_gsw[114],i_gsw[118],i_gsw[130],i_gsw[134],i_gsw[146],i_gsw[150],i_gsw[162],i_gsw[166],i_gsw[178],i_gsw[182]"
-                             outputs="o_fu[13]"/>
-                    <connect name="i_gsw_14"
-                             inputs="i_gsw[1],i_gsw[5],i_gsw[17],i_gsw[21],i_gsw[33],i_gsw[37],i_gsw[49],i_gsw[53],i_gsw[65],i_gsw[69],i_gsw[81],i_gsw[85],i_gsw[97],i_gsw[101],i_gsw[113],i_gsw[117],i_gsw[129],i_gsw[133],i_gsw[145],i_gsw[149],i_gsw[161],i_gsw[165],i_gsw[177],i_gsw[181]"
-                             outputs="o_fu[14]"/>
-                    <connect name="i_gsw_15"
-                             inputs="i_gsw[0],i_gsw[4],i_gsw[16],i_gsw[20],i_gsw[32],i_gsw[36],i_gsw[48],i_gsw[52],i_gsw[64],i_gsw[68],i_gsw[80],i_gsw[84],i_gsw[96],i_gsw[100],i_gsw[112],i_gsw[116],i_gsw[128],i_gsw[132],i_gsw[144],i_gsw[148],i_gsw[160],i_gsw[164],i_gsw[176],i_gsw[180]"
-                             outputs="o_fu[15]"/>
-                    <connect name="i_gsw_16"
-                             inputs="i_gsw[3],i_gsw[7],i_gsw[19],i_gsw[23],i_gsw[35],i_gsw[39],i_gsw[51],i_gsw[55],i_gsw[67],i_gsw[71],i_gsw[83],i_gsw[87],i_gsw[99],i_gsw[103],i_gsw[115],i_gsw[119],i_gsw[131],i_gsw[135],i_gsw[147],i_gsw[151],i_gsw[163],i_gsw[167],i_gsw[179],i_gsw[183]"
-                             outputs="o_fu[16]"/>
-                    <connect name="i_gsw_17"
-                             inputs="i_gsw[2],i_gsw[6],i_gsw[18],i_gsw[22],i_gsw[34],i_gsw[38],i_gsw[50],i_gsw[54],i_gsw[66],i_gsw[70],i_gsw[82],i_gsw[86],i_gsw[98],i_gsw[102],i_gsw[114],i_gsw[118],i_gsw[130],i_gsw[134],i_gsw[146],i_gsw[150],i_gsw[162],i_gsw[166],i_gsw[178],i_gsw[182]"
-                             outputs="o_fu[17]"/>
-                    <connect name="i_gsw_18"
-                             inputs="i_gsw[1],i_gsw[5],i_gsw[17],i_gsw[21],i_gsw[33],i_gsw[37],i_gsw[49],i_gsw[53],i_gsw[65],i_gsw[69],i_gsw[81],i_gsw[85],i_gsw[97],i_gsw[101],i_gsw[113],i_gsw[117],i_gsw[129],i_gsw[133],i_gsw[145],i_gsw[149],i_gsw[161],i_gsw[165],i_gsw[177],i_gsw[181]"
-                             outputs="o_fu[18]"/>
-                    <connect name="i_gsw_19"
-                             inputs="i_gsw[0],i_gsw[4],i_gsw[16],i_gsw[20],i_gsw[32],i_gsw[36],i_gsw[48],i_gsw[52],i_gsw[64],i_gsw[68],i_gsw[80],i_gsw[84],i_gsw[96],i_gsw[100],i_gsw[112],i_gsw[116],i_gsw[128],i_gsw[132],i_gsw[144],i_gsw[148],i_gsw[160],i_gsw[164],i_gsw[176],i_gsw[180]"
-                             outputs="o_fu[19]"/>
-                    <connect name="i_gsw_20"
-                             inputs="i_gsw[3],i_gsw[7],i_gsw[19],i_gsw[23],i_gsw[35],i_gsw[39],i_gsw[51],i_gsw[55],i_gsw[67],i_gsw[71],i_gsw[83],i_gsw[87],i_gsw[99],i_gsw[103],i_gsw[115],i_gsw[119],i_gsw[131],i_gsw[135],i_gsw[147],i_gsw[151],i_gsw[163],i_gsw[167],i_gsw[179],i_gsw[183]"
-                             outputs="o_fu[20]"/>
-                    <connect name="i_gsw_21"
-                             inputs="i_gsw[2],i_gsw[6],i_gsw[18],i_gsw[22],i_gsw[34],i_gsw[38],i_gsw[50],i_gsw[54],i_gsw[66],i_gsw[70],i_gsw[82],i_gsw[86],i_gsw[98],i_gsw[102],i_gsw[114],i_gsw[118],i_gsw[130],i_gsw[134],i_gsw[146],i_gsw[150],i_gsw[162],i_gsw[166],i_gsw[178],i_gsw[182]"
-                             outputs="o_fu[21]"/>
-                    <connect name="i_gsw_22"
-                             inputs="i_gsw[1],i_gsw[5],i_gsw[17],i_gsw[21],i_gsw[33],i_gsw[37],i_gsw[49],i_gsw[53],i_gsw[65],i_gsw[69],i_gsw[81],i_gsw[85],i_gsw[97],i_gsw[101],i_gsw[113],i_gsw[117],i_gsw[129],i_gsw[133],i_gsw[145],i_gsw[149],i_gsw[161],i_gsw[165],i_gsw[177],i_gsw[181]"
-                             outputs="o_fu[22]"/>
-                    <connect name="i_gsw_23"
-                             inputs="i_gsw[0],i_gsw[4],i_gsw[16],i_gsw[20],i_gsw[32],i_gsw[36],i_gsw[48],i_gsw[52],i_gsw[64],i_gsw[68],i_gsw[80],i_gsw[84],i_gsw[96],i_gsw[100],i_gsw[112],i_gsw[116],i_gsw[128],i_gsw[132],i_gsw[144],i_gsw[148],i_gsw[160],i_gsw[164],i_gsw[176],i_gsw[180]"
-                             outputs="o_fu[23]"/>
-                    <connect name="o_fu_ctrl"
-                             inputs="i_gsw[2],i_gsw[18],i_gsw[34],i_gsw[50],i_gsw[66],i_gsw[82],i_gsw[98],i_gsw[114],i_gsw_clk[0],i_gsw_clk[1],i_gsw_clk[2],i_gsw_clk[3],i_gsw_clk[4],i_gsw_clk[5],i_gsw_clk[6],i_gsw_clk[7]"
-                             outputs="o_fu_ctrl"/>
-                </interconnect>
-            </local_sw>
-        </tile>
         <tile type="IO" width="1" height="1">
             <resource name="IO" num="1"/>
             <input name="IN" width="24"/>
@@ -5959,54 +5834,54 @@
             <output name="CLK_HROUTE_OUT" width="24"/>
             <inst name="bufgce" type="BUFGCE" num="24"/>
             <interconnect>
-                <connect name="io_in_to_bufgce_0" inputs="CLK_IO_IN[0]" outputs="bufgce[0].IN"/>
-                <connect name="io_in_to_bufgce_1" inputs="CLK_IO_IN[1]" outputs="bufgce[1].IN"/>
-                <connect name="io_in_to_bufgce_2" inputs="CLK_IO_IN[2]" outputs="bufgce[2].IN"/>
-                <connect name="io_in_to_bufgce_3" inputs="CLK_IO_IN[3]" outputs="bufgce[3].IN"/>
-                <connect name="io_in_to_bufgce_4" inputs="CLK_IO_IN[4]" outputs="bufgce[4].IN"/>
-                <connect name="io_in_to_bufgce_5" inputs="CLK_IO_IN[5]" outputs="bufgce[5].IN"/>
-                <connect name="io_in_to_bufgce_6" inputs="CLK_IO_IN[6]" outputs="bufgce[6].IN"/>
-                <connect name="io_in_to_bufgce_7" inputs="CLK_IO_IN[7]" outputs="bufgce[7].IN"/>
-                <connect name="io_in_to_bufgce_8" inputs="CLK_IO_IN[8]" outputs="bufgce[8].IN"/>
-                <connect name="io_in_to_bufgce_9" inputs="CLK_IO_IN[9]" outputs="bufgce[9].IN"/>
-                <connect name="io_in_to_bufgce_10" inputs="CLK_IO_IN[10]" outputs="bufgce[10].IN"/>
-                <connect name="io_in_to_bufgce_11" inputs="CLK_IO_IN[11]" outputs="bufgce[11].IN"/>
-                <connect name="io_in_to_bufgce_12" inputs="CLK_IO_IN[12]" outputs="bufgce[12].IN"/>
-                <connect name="io_in_to_bufgce_13" inputs="CLK_IO_IN[13]" outputs="bufgce[13].IN"/>
-                <connect name="io_in_to_bufgce_14" inputs="CLK_IO_IN[14]" outputs="bufgce[14].IN"/>
-                <connect name="io_in_to_bufgce_15" inputs="CLK_IO_IN[15]" outputs="bufgce[15].IN"/>
-                <connect name="io_in_to_bufgce_16" inputs="CLK_IO_IN[16]" outputs="bufgce[16].IN"/>
-                <connect name="io_in_to_bufgce_17" inputs="CLK_IO_IN[17]" outputs="bufgce[17].IN"/>
-                <connect name="io_in_to_bufgce_18" inputs="CLK_IO_IN[18]" outputs="bufgce[18].IN"/>
-                <connect name="io_in_to_bufgce_19" inputs="CLK_IO_IN[19]" outputs="bufgce[19].IN"/>
-                <connect name="io_in_to_bufgce_20" inputs="CLK_IO_IN[20]" outputs="bufgce[20].IN"/>
-                <connect name="io_in_to_bufgce_21" inputs="CLK_IO_IN[21]" outputs="bufgce[21].IN"/>
-                <connect name="io_in_to_bufgce_22" inputs="CLK_IO_IN[22]" outputs="bufgce[22].IN"/>
-                <connect name="io_in_to_bufgce_23" inputs="CLK_IO_IN[23]" outputs="bufgce[23].IN"/>
-                <connect name="bufgce_to_hroute_0" inputs="bufgce[0].IN" outputs="CLK_HROUTE_OUT[0]"/>
-                <connect name="bufgce_to_hroute_1" inputs="bufgce[1].IN" outputs="CLK_HROUTE_OUT[1]"/>
-                <connect name="bufgce_to_hroute_2" inputs="bufgce[2].IN" outputs="CLK_HROUTE_OUT[2]"/>
-                <connect name="bufgce_to_hroute_3" inputs="bufgce[3].IN" outputs="CLK_HROUTE_OUT[3]"/>
-                <connect name="bufgce_to_hroute_4" inputs="bufgce[4].IN" outputs="CLK_HROUTE_OUT[4]"/>
-                <connect name="bufgce_to_hroute_5" inputs="bufgce[5].IN" outputs="CLK_HROUTE_OUT[5]"/>
-                <connect name="bufgce_to_hroute_6" inputs="bufgce[6].IN" outputs="CLK_HROUTE_OUT[6]"/>
-                <connect name="bufgce_to_hroute_7" inputs="bufgce[7].IN" outputs="CLK_HROUTE_OUT[7]"/>
-                <connect name="bufgce_to_hroute_8" inputs="bufgce[8].IN" outputs="CLK_HROUTE_OUT[8]"/>
-                <connect name="bufgce_to_hroute_9" inputs="bufgce[9].IN" outputs="CLK_HROUTE_OUT[9]"/>
-                <connect name="bufgce_to_hroute_10" inputs="bufgce[10].IN" outputs="CLK_HROUTE_OUT[10]"/>
-                <connect name="bufgce_to_hroute_11" inputs="bufgce[11].IN" outputs="CLK_HROUTE_OUT[11]"/>
-                <connect name="bufgce_to_hroute_12" inputs="bufgce[12].IN" outputs="CLK_HROUTE_OUT[12]"/>
-                <connect name="bufgce_to_hroute_13" inputs="bufgce[13].IN" outputs="CLK_HROUTE_OUT[13]"/>
-                <connect name="bufgce_to_hroute_14" inputs="bufgce[14].IN" outputs="CLK_HROUTE_OUT[14]"/>
-                <connect name="bufgce_to_hroute_15" inputs="bufgce[15].IN" outputs="CLK_HROUTE_OUT[15]"/>
-                <connect name="bufgce_to_hroute_16" inputs="bufgce[16].IN" outputs="CLK_HROUTE_OUT[16]"/>
-                <connect name="bufgce_to_hroute_17" inputs="bufgce[17].IN" outputs="CLK_HROUTE_OUT[17]"/>
-                <connect name="bufgce_to_hroute_18" inputs="bufgce[18].IN" outputs="CLK_HROUTE_OUT[18]"/>
-                <connect name="bufgce_to_hroute_19" inputs="bufgce[19].IN" outputs="CLK_HROUTE_OUT[19]"/>
-                <connect name="bufgce_to_hroute_20" inputs="bufgce[20].IN" outputs="CLK_HROUTE_OUT[20]"/>
-                <connect name="bufgce_to_hroute_21" inputs="bufgce[21].IN" outputs="CLK_HROUTE_OUT[21]"/>
-                <connect name="bufgce_to_hroute_22" inputs="bufgce[22].IN" outputs="CLK_HROUTE_OUT[22]"/>
-                <connect name="bufgce_to_hroute_23" inputs="bufgce[23].IN" outputs="CLK_HROUTE_OUT[23]"/>
+                <connect name="io_in_to_bufgce_0" inputs="CLK_IO_IN[0]" outputs="bufgce[0].I"/>
+                <connect name="io_in_to_bufgce_1" inputs="CLK_IO_IN[1]" outputs="bufgce[1].I"/>
+                <connect name="io_in_to_bufgce_2" inputs="CLK_IO_IN[2]" outputs="bufgce[2].I"/>
+                <connect name="io_in_to_bufgce_3" inputs="CLK_IO_IN[3]" outputs="bufgce[3].I"/>
+                <connect name="io_in_to_bufgce_4" inputs="CLK_IO_IN[4]" outputs="bufgce[4].I"/>
+                <connect name="io_in_to_bufgce_5" inputs="CLK_IO_IN[5]" outputs="bufgce[5].I"/>
+                <connect name="io_in_to_bufgce_6" inputs="CLK_IO_IN[6]" outputs="bufgce[6].I"/>
+                <connect name="io_in_to_bufgce_7" inputs="CLK_IO_IN[7]" outputs="bufgce[7].I"/>
+                <connect name="io_in_to_bufgce_8" inputs="CLK_IO_IN[8]" outputs="bufgce[8].I"/>
+                <connect name="io_in_to_bufgce_9" inputs="CLK_IO_IN[9]" outputs="bufgce[9].I"/>
+                <connect name="io_in_to_bufgce_10" inputs="CLK_IO_IN[10]" outputs="bufgce[10].I"/>
+                <connect name="io_in_to_bufgce_11" inputs="CLK_IO_IN[11]" outputs="bufgce[11].I"/>
+                <connect name="io_in_to_bufgce_12" inputs="CLK_IO_IN[12]" outputs="bufgce[12].I"/>
+                <connect name="io_in_to_bufgce_13" inputs="CLK_IO_IN[13]" outputs="bufgce[13].I"/>
+                <connect name="io_in_to_bufgce_14" inputs="CLK_IO_IN[14]" outputs="bufgce[14].I"/>
+                <connect name="io_in_to_bufgce_15" inputs="CLK_IO_IN[15]" outputs="bufgce[15].I"/>
+                <connect name="io_in_to_bufgce_16" inputs="CLK_IO_IN[16]" outputs="bufgce[16].I"/>
+                <connect name="io_in_to_bufgce_17" inputs="CLK_IO_IN[17]" outputs="bufgce[17].I"/>
+                <connect name="io_in_to_bufgce_18" inputs="CLK_IO_IN[18]" outputs="bufgce[18].I"/>
+                <connect name="io_in_to_bufgce_19" inputs="CLK_IO_IN[19]" outputs="bufgce[19].I"/>
+                <connect name="io_in_to_bufgce_20" inputs="CLK_IO_IN[20]" outputs="bufgce[20].I"/>
+                <connect name="io_in_to_bufgce_21" inputs="CLK_IO_IN[21]" outputs="bufgce[21].I"/>
+                <connect name="io_in_to_bufgce_22" inputs="CLK_IO_IN[22]" outputs="bufgce[22].I"/>
+                <connect name="io_in_to_bufgce_23" inputs="CLK_IO_IN[23]" outputs="bufgce[23].I"/>
+                <connect name="bufgce_to_hroute_0" inputs="bufgce[0].I" outputs="CLK_HROUTE_OUT[0]"/>
+                <connect name="bufgce_to_hroute_1" inputs="bufgce[1].I" outputs="CLK_HROUTE_OUT[1]"/>
+                <connect name="bufgce_to_hroute_2" inputs="bufgce[2].I" outputs="CLK_HROUTE_OUT[2]"/>
+                <connect name="bufgce_to_hroute_3" inputs="bufgce[3].I" outputs="CLK_HROUTE_OUT[3]"/>
+                <connect name="bufgce_to_hroute_4" inputs="bufgce[4].I" outputs="CLK_HROUTE_OUT[4]"/>
+                <connect name="bufgce_to_hroute_5" inputs="bufgce[5].I" outputs="CLK_HROUTE_OUT[5]"/>
+                <connect name="bufgce_to_hroute_6" inputs="bufgce[6].I" outputs="CLK_HROUTE_OUT[6]"/>
+                <connect name="bufgce_to_hroute_7" inputs="bufgce[7].I" outputs="CLK_HROUTE_OUT[7]"/>
+                <connect name="bufgce_to_hroute_8" inputs="bufgce[8].I" outputs="CLK_HROUTE_OUT[8]"/>
+                <connect name="bufgce_to_hroute_9" inputs="bufgce[9].I" outputs="CLK_HROUTE_OUT[9]"/>
+                <connect name="bufgce_to_hroute_10" inputs="bufgce[10].I" outputs="CLK_HROUTE_OUT[10]"/>
+                <connect name="bufgce_to_hroute_11" inputs="bufgce[11].I" outputs="CLK_HROUTE_OUT[11]"/>
+                <connect name="bufgce_to_hroute_12" inputs="bufgce[12].I" outputs="CLK_HROUTE_OUT[12]"/>
+                <connect name="bufgce_to_hroute_13" inputs="bufgce[13].I" outputs="CLK_HROUTE_OUT[13]"/>
+                <connect name="bufgce_to_hroute_14" inputs="bufgce[14].I" outputs="CLK_HROUTE_OUT[14]"/>
+                <connect name="bufgce_to_hroute_15" inputs="bufgce[15].I" outputs="CLK_HROUTE_OUT[15]"/>
+                <connect name="bufgce_to_hroute_16" inputs="bufgce[16].I" outputs="CLK_HROUTE_OUT[16]"/>
+                <connect name="bufgce_to_hroute_17" inputs="bufgce[17].I" outputs="CLK_HROUTE_OUT[17]"/>
+                <connect name="bufgce_to_hroute_18" inputs="bufgce[18].I" outputs="CLK_HROUTE_OUT[18]"/>
+                <connect name="bufgce_to_hroute_19" inputs="bufgce[19].I" outputs="CLK_HROUTE_OUT[19]"/>
+                <connect name="bufgce_to_hroute_20" inputs="bufgce[20].I" outputs="CLK_HROUTE_OUT[20]"/>
+                <connect name="bufgce_to_hroute_21" inputs="bufgce[21].I" outputs="CLK_HROUTE_OUT[21]"/>
+                <connect name="bufgce_to_hroute_22" inputs="bufgce[22].I" outputs="CLK_HROUTE_OUT[22]"/>
+                <connect name="bufgce_to_hroute_23" inputs="bufgce[23].I" outputs="CLK_HROUTE_OUT[23]"/>
             </interconnect>
         </tile>
         <tile type="LAGLAG" width="1" height="1">

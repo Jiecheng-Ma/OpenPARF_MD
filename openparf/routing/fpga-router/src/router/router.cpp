@@ -118,25 +118,11 @@ void Router::run() {
                 int a_sy=getdiebelong(guide_a.start_y);
                 int b_ey=getdiebelong(guide_b.end_y);
                 int b_sy=getdiebelong(guide_b.start_y);
-                bool neta_cross_die_flag=(a_ey!=a_sy ? 1: 0);
-                bool netb_cross_die_flag=(b_ey!=b_sy ? 1: 0);
-                if(neta_cross_die_flag || netb_cross_die_flag){
-                    if(neta_cross_die_flag && netb_cross_die_flag==0){
-                        return a>b;
-                    }
-                    if(neta_cross_die_flag==0 && netb_cross_die_flag){
-                        return b>a;
-                    }
-                    else{
-                        if ( a->getRerouteTime() == b->getRerouteTime()) {
-                            return (guide_a.end_x - guide_a.start_x + 1) * (guide_a.end_y - guide_a.start_y + 1)
-                            >  (guide_b.end_x - guide_b.start_x + 1) * (guide_b.end_y - guide_b.start_y + 1);
-                        }
-                        else
-                            return a->getRerouteTime() > b->getRerouteTime();
-                    } 
-                }
-                else{
+                bool neta_cross_die_flag = a_ey != a_sy;
+                bool netb_cross_die_flag = b_ey != b_sy;
+                if(neta_cross_die_flag ^ netb_cross_die_flag){ // 只有一个网络跨die
+                    return neta_cross_die_flag; // a跨die则a在前 否则b在前
+                } else { // 两个网络都跨die或都不跨die
                     if ( a->getRerouteTime() == b->getRerouteTime()) {
                         return (guide_a.end_x - guide_a.start_x + 1) * (guide_a.end_y - guide_a.start_y + 1)
                             >  (guide_b.end_x - guide_b.start_x + 1) * (guide_b.end_y - guide_b.start_y + 1);
@@ -145,14 +131,26 @@ void Router::run() {
                         return a->getRerouteTime() > b->getRerouteTime();
                 }
     };
-    auto Num4InterSLL = [&](std::vector<std::shared_ptr<Net>> netlist) {
+    auto Num4InterSLL = [&](std::vector<std::shared_ptr<Net>> netlist) {  // TODO 考虑写成一个普通函数而不是匿名函数
             int countInterSLLnet = 0;
             for (auto net : netlist) {
                 auto guide_a = net->getGuide();
-                if(floor(guide_a.end_y /120) != floor(guide_a.start_y/120)) countInterSLLnet++;
+                if(floor(guide_a.end_y /120) != floor(guide_a.start_y/120)) {
+                    countInterSLLnet++;
+                    net->setInterDieFlag(1);
+                }
             }
             return countInterSLLnet;
     };
+    auto GetCoingessionNetInfo = [](std::shared_ptr<Net> net,std::shared_ptr<RouteGraph> graph){  // TODO 考虑写成一个普通函数而不是匿名函数
+        auto sourceID = net->getSource();
+        std::cout << "      Source:"<< sourceID <<" x:"<<graph->getPos(sourceID).X()<<"y:"<<graph->getPosHigh(sourceID).Y()<<std::endl;
+        for(int i = 0 ; i < net->getSinkSize();i++){
+            auto sinkID = net->getSinkByIdx(i);
+            std::cout <<"       Sink:"<< " x:"<<graph->getPos(sinkID).X()<<"y:"<<graph->getPosHigh(sinkID).Y()<<std::endl;
+        }
+    };
+
 
     auto delayCmp = [](const std::shared_ptr<Net> &a, const std::shared_ptr<Net> &b) {
             if (Pathfinder::isTimingDriven) {
@@ -190,7 +188,11 @@ void Router::run() {
     bool changeSortRule = false;
     int his1=0;
     int his2=0;
+    bool flag4PrintCongestion = false;
     std::cout << "-------TotalNetNum #"<< netlist.size()<<"----InterSLLNetNum #"<< num4interSllNet <<"---------"<< std::endl;
+    ////
+    ////--------------------------------------------------------iter-------------------------------------------------------
+    ////
     for (int iter = 0; iter < maxRipupIter; iter++) {
         // if (iter >= 290)
         // RouteGraph::debugging = true;
@@ -228,7 +230,7 @@ void Router::run() {
             std::cout << " changeSortRule "<<std::endl;
         	changeSortRule = false;
         }   
-        //////////////////////////////////////////////////
+        ///////////////////////////////////////////////////
 		
         int vertexNum = graph->getVertexNum();
         Pathfinder::routetree.ripup(netlist, (iter > 0 && iter % 2 == 0)); 
@@ -251,7 +253,7 @@ void Router::run() {
             // std::cout << net->guide.start_x << ' ' << net->guide.end_x << ' ' << net->guide.start_y << ' ' << net->guide.end_y << std::endl;
             // if (iter == 30) net->useGlobalResult(false);
             // std::cout << net->getName() << ' ' << (net->getRouteStatus() == SUCCESS ? "SUCCESS" : "CONGEST") << std::endl;
-            if (iter == 300) net->useGlobalResult(false);
+            if (iter == 100) net->useGlobalResult(false);//300
             if (net->getRouteStatus() == SUCCESS)
                 successCnt++;
             if (net->getRouteStatus() == FAILED) {
@@ -261,6 +263,11 @@ void Router::run() {
                 //     net->setRouteStatus(UNROUTED);
                 // }
                 // else 
+                if(flag4PrintCongestion){
+                    std::cout << net->getName() << " ; Rerouted TIme: " << net->getRerouteTime() << " " << std::endl;
+                    std::cout << "  info:"<<std::endl;
+                    GetCoingessionNetInfo(net,graph);
+                }
                 failedCnt++;
             }
             if (net->getRouteStatus() == UNROUTED || net->getRouteStatus() == CONGESTED) { //拥塞处理为未布线
@@ -269,11 +276,11 @@ void Router::run() {
                     net->expandGuide();//扩大boundingbox
                     std::cout << "ExpandGuide NET: "<< net->getName() <<std::endl;                   
                 }
-                if ( net->getRerouteTime() > 80 && iter > 100 && net->useGlobalResult() == false){
+                if ( net->getRerouteTime() > 80 && net->useGlobalResult() == false){
                     for(int i = 0;  (i < int(net->getRerouteTime() - 80) && i < 2 ) ;i++){
                             net->expandGuide();//扩大boundingbox
                     }
-                    std::cout << "ExpandGuide High congest NET: "<< net->getName() <<"   reroutrtime: " << net->getRerouteTime() <<std::endl;   
+                    std::cout << "ExpandGuide High congest NET: "<< net->getName() <<" reroutrtime: " << net->getRerouteTime() <<std::endl;   
                 }
 
                 if (MTType == SingleThread) { 
@@ -288,8 +295,7 @@ void Router::run() {
                     int id = 0;
                     for (int i = 0; i < 10; i++) {
                         if (num_sinks <= sinks_threshold[i]) {
-                            id = i;
-                            break;
+                            id = i;break;
                         }
                     }
                     sinks_netcnt[id]++; // id 1-10
@@ -326,14 +332,13 @@ void Router::run() {
         ////////////////////////////////////////////////////////////////////////////////////
         if(iter == 0)
         	reccord4unrouted = unroutedCnt;
-
         if(reccord4unrouted <= unroutedCnt)
         	changeSortRule = true;
-        	
         reccord4unrouted = unroutedCnt;
-
+        if(iter>50 && unroutedCnt <= 40)
+            flag4PrintCongestion = true;
         ////////////////////////////////////////////////////////////////////////////////////
-        if (totalDRTime >= 21600) break;
+        if (totalDRTime >= 57600) break;
         // if (iter == 15) exit(-1);
         // getchar();
         // if (finished) break;
@@ -414,7 +419,6 @@ void Router::run() {
         if (iter == 0) RouteGraph::presFac = RouteGraph::presFacInit;
         else RouteGraph::presFac = std::min(RouteGraph::presFacMult * RouteGraph::presFac, (COST_T)1e25);
         // PathNode::astarFac = std::min(RouteGraph::presFacMult * PathNode::astarFac, (COST_T)1e20);
-        
         // debug for timeOut 
         // if (iter >= 290) {
         //     std::string outputDoc = "debug_result_" + std::to_string(iter);
@@ -428,7 +432,6 @@ void Router::run() {
         else if (InstList::period) {
             timer.STA();
         }
-
         // std::cout << Pathfinder::routetree.getTreeNodeByIdx
          
     }
@@ -461,6 +464,5 @@ void Router::routeTileNets() {
     //     for ()
     // }
 }
-
 
 }

@@ -13,7 +13,7 @@
   "lambda_iters": 1,
   "gamma_iters": 1,
   "sub_iters": 1,
-  "place_flag": 0,
+  "place_flag": 1,
   "global_place_flag": 1,
   "legalize_flag": 1,
   "detailed_place_flag": 1,

@@ -72,6 +72,8 @@ public:
     COST_T getSinkCritical(int sink) { return sinkCritical[sink]; }
     void setSinkCritical(int idx, COST_T crit) { sinkCritical[sinks[idx]] = crit; }
 
+    void setInterDieFlag(bool status){ InterDie = status;}
+
     friend class Pathfinder;
     friend class AStarPathfinder;
     friend class RouteGraphBuilder;
@@ -79,6 +81,8 @@ public:
     friend class Router;
     friend class GlobalRouter;
     friend class GlobalRouteTree;
+    
+
 private:
     std::string name;
     int source;
@@ -95,6 +99,7 @@ private:
     BoundingBox guide;
     std::set<std::pair<INDEX_T, INDEX_T>> globalRouteResult;
     bool _useGlobalResult;
+    bool InterDie = false;
 };
 
 } // namespace router
